@@ -16,7 +16,7 @@ public class RegistryMachine {
     }
     public void run() {
         init();
-        MachineTask machineTask = new MachineTask(config.getEmail(), config.getPassword(), aima);
+        MachineTask machineTask = new MachineTask("wsscy2ab004","2692194" , aima);
         try {
             machineTask.process();
         } catch (Exception e) {

@@ -22,15 +22,13 @@ public class MachineTask {
     private String password;
     private AIMA aima;
 
-    public MachineTask(String email, String password,AIMA aima) {
+    public MachineTask(String email, String password, AIMA aima) {
         this.email = email;
         this.password = password;
         this.aima = aima;
     }
 
     public void process() throws Exception {
-        String email = "wsscy2004";
-        String password = "2692194";
         DesiredCapabilities caps = new DesiredCapabilities();
         caps.setCapability("phantomjs.page.settings.userAgent", "Mozilla/5.0 (Linux;U;Android 2.2.2;zh-cn;ZTE-C_N880S Build/FRF91) AppleWebkit/531.1(KHTML, like Gecko) Version/4.0 Mobile Safari/531.1");
         caps.setJavascriptEnabled(true);
@@ -47,16 +45,16 @@ public class MachineTask {
         WebElement phoneElement = session.findElementByCssSelector("#phoneNum_2");
         String phone = aima.getPhone();
         phoneElement.sendKeys(phone);
-        Thread.sleep(1000);
+        //如何监控emailcheck.php
+        Thread.sleep(1500);
         if (!emailElementAlert.getText().isEmpty()) {
-            log.error("邮箱不合法：" + emailElementAlert.getText());
+            throw new MachineException("邮箱不合法：" + emailElementAlert.getText());
         } else {
             log.debug("邮箱ok,继续");
         }
         WebElement releaseCodeElement = session.findElementByCssSelector("#getCode_2");
         releaseCodeElement.click();
         FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("sendcode.png"));
-        System.exit(0);
         String code = aima.getPhoneCode(phone);
         if (code != null) {
             WebElement codeElement = session.findElementByCssSelector("#checkCode_2");

@@ -9,7 +9,6 @@ import java.io.IOException;
  * Created by edwardsbean on 2015/2/8 0008.
  */
 public class Application {
-    private static Logger log = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
         String uid = "2509003147";

@@ -73,6 +73,6 @@ public class AIMA {
                 log.debug("验证码不对，继续等待");
             }
         }
-        return null;
+        throw new MachineException("向爱玛平台索要验证码超时");
     }
 }
