@@ -20,7 +20,7 @@ src/main/java/com/baidu/softquery
 *.ear
 *.sar
 *.class
-
+*.png
 # Maven
 target/
 

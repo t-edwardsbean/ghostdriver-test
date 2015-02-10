@@ -56,10 +56,14 @@ public class AIMA {
         }
     }
 
-    public String getPhoneCode(String phone) throws InterruptedException {
+    public String getPhoneCode(String phone)  {
         log.debug("向爱玛平台所要手机验证码:" + AIMA_GET_CODE_URL + phone);
         for (int i = 0; i < 20; i++) {
-            Thread.sleep(3000);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             String codeResult = HttpUtils.Get(AIMA_GET_CODE_URL + phone);
             log.debug("爱玛平台返回验证码信息:{}", codeResult);
             int length = codeResult.split("\\|").length;

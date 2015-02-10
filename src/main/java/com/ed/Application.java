@@ -1,7 +1,5 @@
 package com.ed;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -18,6 +16,10 @@ public class Application {
         Config config = new Config(uid, pwd, pid);
         RegistryMachine registryMachine = new RegistryMachine();
         registryMachine.setConfig(config);
+        registryMachine.thread(3);
+        registryMachine.setTaskProcess(new SinaTaskProcess());
+//        registryMachine.addTask(new Task("wasd1230q", "2692194"), new Task("wasd123qc", "2692194"), new Task("azxas1asd3", "2692194"));
+        registryMachine.addTask(new Task("wasd123qc", "2692194"));
         registryMachine.run();
 
     }
