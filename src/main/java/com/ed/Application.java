@@ -18,8 +18,8 @@ public class Application {
         registryMachine.setConfig(config);
         registryMachine.thread(3);
         registryMachine.setTaskProcess(new SinaTaskProcess());
-//        registryMachine.addTask(new Task("wasd1230q", "2692194"), new Task("wasd123qc", "2692194"), new Task("azxas1asd3", "2692194"));
-        registryMachine.addTask(new Task("wasd123qc", "2692194"));
+        registryMachine.addTask(new Task("wasd1230q3", "2692194"), new Task("wasd123qc3", "2692194"), new Task("azxas1asd33", "2692194"));
+//        registryMachine.addTask(new Task("wasd123a1qc", "2692194"));
         registryMachine.run();
 
     }

@@ -2,6 +2,8 @@ package com.ed;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.*;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
@@ -9,9 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by edwardsbean on 2015/2/9 0009.
@@ -21,17 +20,15 @@ public class SinaTaskProcess implements TaskProcess{
 
     public void process(AIMA aima, Task task) {
         DesiredCapabilities caps = new DesiredCapabilities();
-        caps.setCapability("phantomjs.page.settings.userAgent", "Mozilla/5.0 (Linux;U;Android 2.2.2;zh-cn;ZTE-C_N880S Build/FRF91) AppleWebkit/531.1(KHTML, like Gecko) Version/4.0 Mobile Safari/531.1");
+        //启动phantomjs传递的命令行参数
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{"--ignore-ssl-errors=yes"});
+        //phantomjs启动后的参数
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_PAGE_SETTINGS_PREFIX + "userAgent", "Mozilla/5.0 (Linux;U;Android 2.2.2;zh-cn;ZTE-C_N880S Build/FRF91) AppleWebkit/531.1(KHTML, like Gecko) Version/4.0 Mobile Safari/531.1");
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, "/home/edwardsbean/software/phantomjs-1.9.2-linux-x86_64/bin/phantomjs");
         caps.setJavascriptEnabled(true);
-        caps.setPlatform(Platform.ANDROID);
         caps.setCapability("takesScreenshot", true);
         RemoteWebDriver session = null;
-        try {
-            session = new RemoteWebDriver(new URL("http://localhost:9999"), caps);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        session.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+        session = new PhantomJSDriver(caps);
         session.get("https://mail.sina.com.cn/register/regmail.php");
         log.debug(Thread.currentThread() + "填写邮箱名字");
         String email = task.getEmail();
@@ -40,11 +37,7 @@ public class SinaTaskProcess implements TaskProcess{
         } else if (!email.matches("\\w+")) {
             throw new MachineException(Thread.currentThread() + "邮箱名仅允许使用小写英文、数字或下划线");
         }
-        try {
-            FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("begin.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
         WebElement emailElement = session.findElementByCssSelector("#emailName");
         WebElement passwordElement = session.findElementByCssSelector("#password_2");
         emailElement.sendKeys(email);
@@ -71,7 +64,7 @@ public class SinaTaskProcess implements TaskProcess{
         WebElement releaseCodeElement = session.findElementByCssSelector("#getCode_2");
         releaseCodeElement.click();
         try {
-            FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("sendcode.png"));
+            FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File(Thread.currentThread().getId() + "sendcode.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,7 +84,7 @@ public class SinaTaskProcess implements TaskProcess{
         //必须删除cookie,否则其他session也是互通cookie
         session.manage().deleteAllCookies();
         try {
-            FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("result.png"));
+            FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File(Thread.currentThread().getId() + "result.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

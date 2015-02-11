@@ -56,7 +56,7 @@ public class AIMA {
         }
     }
 
-    public String getPhoneCode(String phone)  {
+    public String getPhoneCode(String phone) {
         log.debug("向爱玛平台所要手机验证码:" + AIMA_GET_CODE_URL + phone);
         for (int i = 0; i < 20; i++) {
             try {
@@ -71,8 +71,10 @@ public class AIMA {
                 Pattern p = Pattern.compile("[^0-9]");
                 Matcher m = p.matcher(codeResult.split("\\|")[1]);
                 String code = m.replaceAll("");
-                log.debug("发现野生的手机验证码一枚:" + code);
-                return code;
+                if (!code.isEmpty()) {
+                    log.debug("发现野生的手机验证码一枚:" + code);
+                    return code;
+                }
             } else {
                 log.debug("验证码不对，继续等待");
             }
