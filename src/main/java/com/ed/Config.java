@@ -7,13 +7,19 @@ public class Config {
     private String uid;
     private String pwd;
     private String pid;
-    private String email;
-    private String password;
-
+    private String phantomjsPath;
     public Config(String uid, String pwd, String pid) {
         this.uid = uid;
         this.pwd = pwd;
         this.pid = pid;
+    }
+
+    public String getPhantomjsPath() {
+        return phantomjsPath;
+    }
+
+    public void setPhantomjsPath(String phantomjsPath) {
+        this.phantomjsPath = phantomjsPath;
     }
 
     public String getUid() {
@@ -38,21 +44,5 @@ public class Config {
 
     public void setPid(String pid) {
         this.pid = pid;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }

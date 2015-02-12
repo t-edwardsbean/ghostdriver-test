@@ -59,5 +59,6 @@ public class RegistryMachine {
                 }
             });
         }
+        service.shutdown();
     }
 }

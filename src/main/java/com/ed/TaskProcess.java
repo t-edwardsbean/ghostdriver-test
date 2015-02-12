@@ -3,7 +3,13 @@ package com.ed;
 /**
  * Created by edwardsbean on 2015/2/10 0010.
  */
-public interface TaskProcess {
-    public void process(AIMA aima, Task task);
+public abstract class TaskProcess {
+    protected String phantomjsPath;
 
+    public TaskProcess(String phantomjsPath) {
+        this.phantomjsPath = phantomjsPath;
+    }
+
+    public abstract void process(AIMA aima, Task task);
+    
 }
