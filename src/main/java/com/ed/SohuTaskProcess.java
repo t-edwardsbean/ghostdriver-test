@@ -28,7 +28,7 @@ public class SohuTaskProcess extends TaskProcess {
     }
 
     @Override
-    public void process(AIMA aima, Task task) {
+    public void process(AIMA aima, Task task) throws Exception{
         DesiredCapabilities caps = new DesiredCapabilities();
         List<String> args = new ArrayList<String>();
         args.add("--ignore-ssl-errors=yes");
@@ -70,12 +70,13 @@ public class SohuTaskProcess extends TaskProcess {
             WebElement serviceAdmit = session.findElementByCssSelector("#email_reg > p:nth-child(8) > input");
             serviceAdmit.click();
             emailElement.sendKeys(email);
-            WebElement emailElementAlert = session.findElementByCssSelector("#email_reg > p:nth-child(2) > span:nth-child(4) em");
-            try {
-                Thread.sleep(1500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            String password = task.getPassword();
+            if (17 < password.length() || password.length() < 6) {
+                throw new MachineException(Thread.currentThread() + "密码的长度应该在6-16个字符之间");
             }
+            passwordElementOne.sendKeys(password);
+            Thread.sleep(1500);
+            WebElement emailElementAlert = session.findElementByCssSelector("#email_reg > p:nth-child(2) > span:nth-child(4) em");
             String emailAlert = emailElementAlert.getAttribute("class");
             //貌似浏览器内核版本不支持搜狐的邮箱名验证？
             if (emailAlert.equals("success")) {
@@ -83,11 +84,6 @@ public class SohuTaskProcess extends TaskProcess {
             } else {
                 throw new MachineException(Thread.currentThread() + "邮箱不合法：" + emailElementAlert.getText());
             }
-            String password = task.getPassword();
-            if (17 < password.length() || password.length() < 6) {
-                throw new MachineException(Thread.currentThread() + "密码的长度应该在6-16个字符之间");
-            }
-            passwordElementOne.sendKeys(password);
             passwordElementAgain.sendKeys(password);
             WebElement phoneElement = session.findElementByCssSelector("#email_reg input[name=mobile]");
 //            String phone = aima.getPhone();
@@ -95,35 +91,68 @@ public class SohuTaskProcess extends TaskProcess {
             phoneElement.sendKeys("18046049822");
             WebElement releaseElement = session.findElementByCssSelector("#email_reg a.mt5");
             releaseElement.click();
-            try {
-                log.debug("等待第一个验证码");
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
+            log.debug("等待第一个验证码");
+            Thread.sleep(1000);
             log.debug("截取第一个图片验证码");
             WebElement firstPicture = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.vContext > img");
             log.debug("图片验证码：" + firstPicture.getTagName());
-            try {
-//                TakeScreenShot(session, firstPicture);
-                TakeScreenShot(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"));
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String firstPicturePath = "tmp/" + task.getEmail() + "-one.png";
+            TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"), firstPicturePath);
+            Thread.sleep(1000);
+            String result[] = UUAPI.easyDecaptcha(firstPicturePath, 3005);
+            log.debug("第一个图片验证码codeID:" + result[0]);
+            log.debug("第一个图片验证码Result:" + result[1]);
             log.debug("输入第一个图片验证码");
-            String firstPictureCode = "";
+            //TODO 获取图片验证码结果
             WebElement firstPictureVerify = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.vContext > input");
-            firstPictureVerify.sendKeys(firstPictureCode);
-            log.debug("验证第一个图片验证码");
+            firstPictureVerify.sendKeys(result[1]);
             WebElement firstPictureButton = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > a.blue_btn");
-            firstPictureButton.click();
-        } catch (MachineException e) {
-            e.printStackTrace();
+            int tryNum = 3;
+            while (tryNum > 0) {
+                log.debug("验证第一个图片验证码");
+                firstPictureButton.click();
+                WebElement firstAlert = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.alert.alert-red");
+                Thread.sleep(3000);
+                log.debug("第一个验证码验证结果：" + firstAlert.getText());
+                if (!"验证码错误".equals(firstAlert.getText())) {
+                    break;
+                }
+                log.debug("更换第一个验证码，重试");
+                TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"));
+                Thread.sleep(2000);
+                //TODO 获取图片验证码结果
+                firstPictureCode = "bbbbb";
+                firstPictureVerify.clear();
+                firstPictureVerify.sendKeys(firstPictureCode);
+                tryNum--;
+            }
+            Thread.sleep(500);
+            String phoneCode = "123123";
+            String isPhoneRelease = releaseElement.getText();
+            if ("秒后可重新发送".equals(isPhoneRelease)) {
+                //TODO 获取手机验证码
+                log.debug("获取手机验证码");
+            } else {
+                throw new MachineException("错误");
+            }
+            WebElement phoneVerifyInput = session.findElementByCssSelector("#email_reg > p:nth-child(6) > input[type='text']");
+            phoneVerifyInput.sendKeys(phoneCode);
+
+            log.debug("截取第二个图片验证码");
+            WebElement secondPicture = session.findElementByCssSelector("#yzm_img");
+            log.debug("图片验证码：" + secondPicture.getTagName());
+            TakeScreenShot(session, secondPicture);
+            Thread.sleep(1000);
+            log.debug("输入第二个图片验证码");
+            String secondPictureCode = "asdas";
+            WebElement secondPictureVerify = session.findElementByCssSelector("#yzm");
+            secondPictureVerify.sendKeys(secondPictureCode);
+            log.debug("验证第二个图片验证码");
+            WebElement submit = session.findElementByCssSelector("#confirm1");
+            submit.click();
         } finally {
             try {
-                FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File(Thread.currentThread().getId() + "sohu-end-exception.png"));
+                FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("tmp/sohu-end-exception.png"));
                 Thread.sleep(1000);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -134,6 +163,29 @@ public class SohuTaskProcess extends TaskProcess {
         }
     }
 
+    public static void TakeFirstPicture(PhantomJSDriver driver, WebElement element,String fileName) {
+        File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(screen);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        File f = new File(fileName);
+
+        Point point = element.getLocation();
+        int width = element.getSize().getWidth();
+        int height = element.getSize().getHeight();
+        BufferedImage dest = img.getSubimage(point.getX() + 435, point.getY() + 285, width/3 - 10, height/3 - 10);
+        try {
+            ImageIO.write(dest, "png", screen);
+            FileUtils.copyFile(screen, f);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
     public static void TakeScreenShot(PhantomJSDriver driver, WebElement element) {
         File screen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
         BufferedImage img = null;
@@ -143,11 +195,14 @@ public class SohuTaskProcess extends TaskProcess {
             e.printStackTrace();
         }
 
-        File f = new File("element.png");
+        File f = new File("tmp/second.png");
 
         Point point = element.getLocation();
         int width = element.getSize().getWidth();
         int height = element.getSize().getHeight();
+        log.debug("图片位置：" + point);
+        log.debug("图片长：" + width);
+        log.debug("图片宽：" + height);
         BufferedImage dest = img.getSubimage(point.getX(), point.getY(), width, height);
         try {
             ImageIO.write(dest, "png", screen);
@@ -155,6 +210,37 @@ public class SohuTaskProcess extends TaskProcess {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        String uid = "2509003147";
+        String pwd = "1314520";
+        String pid = "1219";
+
+        Config config = new Config(uid, pwd, pid);
+        RegistryMachine registryMachine = new RegistryMachine();
+        registryMachine.setConfig(config);
+        registryMachine.thread(1);
+        registryMachine.setTaskProcess(new SohuTaskProcess("E:\\GitHub\\registry-machine\\dependency\\phantomjs\\phantomjs.exe"));
+        registryMachine.addTask(
+//                new Task("wasd1babaxq3", "2692194").setArgs(Arrays.asList("--proxy=127.0.0.1:7070", "--proxy-type=socks5")),
+//                new Task("wasd123qxxc3", "2692194"),
+//                new Task("azxas1asaz33", "2692194"),
+//                new Task("azxas1asdxz33", "2692194"),
+//                new Task("azxas1asdxz33", "2692194"),
+//                new Task("azxas1asdxz33", "2692194"),
+//                new Task("azxas1asdxz33", "2692194"),
+                new Task("aazx123aa1s", "2692194")
+        );
+        boolean status = UUAPI.checkAPI();    //校验API，必须调用一次，校验失败，打码不成功
+
+        if (!status) {
+            System.out.print("API文件校验失败，无法使用打码服务");
+            return;
+        }
+
+        registryMachine.run();
 
     }
 

@@ -43,7 +43,7 @@ public class RegistryMachine {
     }
 
     public void run() {
-        init();
+//        init();
         log.debug("启动注册机");
         for (final Task task : queue) {
             service.execute(new Runnable() {
