@@ -78,11 +78,11 @@ public class SohuTaskProcess extends TaskProcess {
             Thread.sleep(1500);
             WebElement emailElementAlert = session.findElementByCssSelector("#email_reg > p:nth-child(2) > span:nth-child(4) em");
             String emailAlert = emailElementAlert.getAttribute("class");
-            //貌似浏览器内核版本不支持搜狐的邮箱名验证？
             if (emailAlert.equals("success")) {
                 log.debug(Thread.currentThread() + "邮箱ok,继续");
             } else {
-                throw new MachineException(Thread.currentThread() + "邮箱不合法：" + emailElementAlert.getText());
+                WebElement emailElementAlertInfo = session.findElementByCssSelector("#email_reg > p:nth-child(2) > span:nth-child(4)");
+                throw new MachineException(Thread.currentThread() + "邮箱不合法：" + emailElementAlertInfo.getText());
             }
             passwordElementAgain.sendKeys(password);
             WebElement phoneElement = session.findElementByCssSelector("#email_reg input[name=mobile]");
@@ -94,8 +94,6 @@ public class SohuTaskProcess extends TaskProcess {
             log.debug("等待第一个验证码");
             Thread.sleep(1000);
             log.debug("截取第一个图片验证码");
-            WebElement firstPicture = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.vContext > img");
-            log.debug("图片验证码：" + firstPicture.getTagName());
             String firstPicturePath = "tmp/" + task.getEmail() + "-one.png";
             TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"), firstPicturePath);
             Thread.sleep(1000);
@@ -103,55 +101,61 @@ public class SohuTaskProcess extends TaskProcess {
             log.debug("第一个图片验证码codeID:" + result[0]);
             log.debug("第一个图片验证码Result:" + result[1]);
             log.debug("输入第一个图片验证码");
-            //TODO 获取图片验证码结果
+//            //TODO 获取图片验证码结果
             WebElement firstPictureVerify = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.vContext > input");
             firstPictureVerify.sendKeys(result[1]);
             WebElement firstPictureButton = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > a.blue_btn");
             int tryNum = 3;
-            while (tryNum > 0) {
+            while (true) {
                 log.debug("验证第一个图片验证码");
+                FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("tmp/sohu-first-before.png"));
                 firstPictureButton.click();
                 WebElement firstAlert = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.alert.alert-red");
                 Thread.sleep(3000);
                 log.debug("第一个验证码验证结果：" + firstAlert.getText());
+                //验证成功
                 if (!"验证码错误".equals(firstAlert.getText())) {
                     break;
                 }
-                log.debug("更换第一个验证码，重试");
-                TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"));
-                Thread.sleep(2000);
-                //TODO 获取图片验证码结果
-                firstPictureCode = "bbbbb";
-                firstPictureVerify.clear();
-                firstPictureVerify.sendKeys(firstPictureCode);
-                tryNum--;
+                break;
+//                log.debug("更换第一个验证码，重试");
+//                TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"),firstPicturePath);
+//                Thread.sleep(2000);
+//                //TODO 获取图片验证码结果
+//                result = UUAPI.easyDecaptcha(firstPicturePath, 1005);
+//                log.debug("第一个图片验证码codeID:" + result[0]);
+//                log.debug("第一个图片验证码Result:" + result[1]);
+//                firstPictureVerify.clear();
+//                firstPictureVerify.sendKeys(result[1]);
+//                tryNum--;
             }
-            Thread.sleep(500);
-            String phoneCode = "123123";
-            String isPhoneRelease = releaseElement.getText();
-            if ("秒后可重新发送".equals(isPhoneRelease)) {
-                //TODO 获取手机验证码
-                log.debug("获取手机验证码");
-            } else {
-                throw new MachineException("错误");
-            }
-            WebElement phoneVerifyInput = session.findElementByCssSelector("#email_reg > p:nth-child(6) > input[type='text']");
-            phoneVerifyInput.sendKeys(phoneCode);
-
-            log.debug("截取第二个图片验证码");
-            WebElement secondPicture = session.findElementByCssSelector("#yzm_img");
-            log.debug("图片验证码：" + secondPicture.getTagName());
-            TakeScreenShot(session, secondPicture);
-            Thread.sleep(1000);
-            log.debug("输入第二个图片验证码");
-            String secondPictureCode = "asdas";
-            WebElement secondPictureVerify = session.findElementByCssSelector("#yzm");
-            secondPictureVerify.sendKeys(secondPictureCode);
-            log.debug("验证第二个图片验证码");
-            WebElement submit = session.findElementByCssSelector("#confirm1");
-            submit.click();
+//            Thread.sleep(500);
+//            String phoneCode = "123123";
+//            String isPhoneRelease = releaseElement.getText();
+//            if ("秒后可重新发送".equals(isPhoneRelease)) {
+//                //TODO 获取手机验证码
+//                log.debug("获取手机验证码");
+//            } else {
+//                throw new MachineException("错误");
+//            }
+//            WebElement phoneVerifyInput = session.findElementByCssSelector("#email_reg > p:nth-child(6) > input[type='text']");
+//            phoneVerifyInput.sendKeys(phoneCode);
+//
+//            log.debug("截取第二个图片验证码");
+//            WebElement secondPicture = session.findElementByCssSelector("#yzm_img");
+//            log.debug("图片验证码：" + secondPicture.getTagName());
+//            TakeScreenShot(session, secondPicture);
+//            Thread.sleep(1000);
+//            log.debug("输入第二个图片验证码");
+//            String secondPictureCode = "asdas";
+//            WebElement secondPictureVerify = session.findElementByCssSelector("#yzm");
+//            secondPictureVerify.sendKeys(secondPictureCode);
+//            log.debug("验证第二个图片验证码");
+//            WebElement submit = session.findElementByCssSelector("#confirm1");
+//            submit.click();
         } finally {
             try {
+                Thread.sleep(1000);
                 FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("tmp/sohu-end-exception.png"));
                 Thread.sleep(1000);
             } catch (Exception e) {
@@ -222,7 +226,7 @@ public class SohuTaskProcess extends TaskProcess {
         RegistryMachine registryMachine = new RegistryMachine();
         registryMachine.setConfig(config);
         registryMachine.thread(1);
-        registryMachine.setTaskProcess(new SohuTaskProcess("E:\\GitHub\\registry-machine\\dependency\\phantomjs\\phantomjs.exe"));
+        registryMachine.setTaskProcess(new SohuTaskProcess("dependency\\phantomjs\\phantomjs.exe"));
         registryMachine.addTask(
 //                new Task("wasd1babaxq3", "2692194").setArgs(Arrays.asList("--proxy=127.0.0.1:7070", "--proxy-type=socks5")),
 //                new Task("wasd123qxxc3", "2692194"),
@@ -231,7 +235,7 @@ public class SohuTaskProcess extends TaskProcess {
 //                new Task("azxas1asdxz33", "2692194"),
 //                new Task("azxas1asdxz33", "2692194"),
 //                new Task("azxas1asdxz33", "2692194"),
-                new Task("aazx123aa1s", "2692194")
+                new Task("aazx123a1a1", "2692194")
         );
         boolean status = UUAPI.checkAPI();    //校验API，必须调用一次，校验失败，打码不成功
 

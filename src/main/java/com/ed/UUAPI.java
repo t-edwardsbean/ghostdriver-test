@@ -10,6 +10,10 @@ import java.io.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 
@@ -269,7 +273,92 @@ public class UUAPI {
         return new String(resultCharArray);
     }
 
-    //MD5校验函数结束
+    public static Map<String, String> resultType = new HashMap<String, String>();
+    public static Map<String, String> errorType = new HashMap<String, String>();
+
+    static {
+        resultType.put("-1001", "网络连接失败");
+        resultType.put("-1002", "网络传输超时");
+        resultType.put("-1003", "文件读取失败");
+        resultType.put("-1004", "图像内存流无效");
+        resultType.put("-1005", "服务器返回内容错误");
+        resultType.put("-1006", "服务器状态错误");
+        resultType.put("-1007", "内存分配失败");
+        resultType.put("-1008", "没有取到验证码结果，返回此值指示codeID已返回");
+        resultType.put("-1009", "此时不允许进行该操作（用户没有登录会出现这个错误）");
+        resultType.put("-1010", "图片过大，限制1MB");
+        resultType.put("-1011", "图片转换为JPG失败，源图片无效？");
+        resultType.put("-1012", "获取服务器配置信息失败，是由于网络连接失败造成的");
+        resultType.put("-1013", "传入的字符串缓冲区不足");
+        resultType.put("-1014", "URL下载失败！");
+        resultType.put("-1015", "连续重复的图片次数达到设定值");
+        resultType.put("-1016", "找不到窗口标题");
+        resultType.put("-1017", "找不到窗口句柄");
+        resultType.put("-1020", "切换账户登录超过20次");
+        errorType.put("-1020", "切换账户登录超过20次");
+        resultType.put("-1021", "1分钟之内查分超过10次");
+        errorType.put("-1021", "1分钟之内查分超过10次");
+        errorType.put("-1022", "查分时未登录，只有登录之后才能查分");
+        resultType.put("-1022", "查分时未登录，只有登录之后才能查分");
+        resultType.put("-1023", "文件上传成功，服务器返回的验证码id为0");
+        resultType.put("-1024", "上传时codeType为0");
+        resultType.put("-1025", "程序捕获到SEH异常");
+        errorType.put("-1025", "程序捕获到SEH异常");
+        errorType.put("-1026", "未调用setSoftInfo函数");
+        resultType.put("-1026", "未调用setSoftInfo函数");
+        errorType.put("-1101", "无效的异步操作句柄（异步调用函数专有）");
+        resultType.put("-1101", "无效的异步操作句柄（异步调用函数专有）");
+        errorType.put("-1102", "异步操作尚未完成（异步调用函数专有）");
+        resultType.put("-1102", "异步操作尚未完成（异步调用函数专有）");
+        resultType.put("-1025", "DLL出现异常(通过配置文件设置dll异常时可生成dump文件)");
+        errorType.put("-1025", "DLL出现异常(通过配置文件设置dll异常时可生成dump文件)");
+        errorType.put("-1026", "软件未初始化");
+        resultType.put("-1026", "软件未初始化");
+        resultType.put("-16009", "1分钟之内查分超过10次");
+        errorType.put("-16009", "1分钟之内查分超过10次");
+        resultType.put("-16002", "查分时未登录，只有登录之后才能查分");
+        errorType.put("-16002", "查分时未登录，只有登录之后才能查分");
+        resultType.put("-11006", "账户登录过于频繁");
+        errorType.put("-11006", "账户登录过于频繁");
+        resultType.put("-14009", "密码过于简单");
+        errorType.put("-14009", "密码过于简单");
+        resultType.put("-17009", "报错过于频繁");
+        errorType.put("-17009", "报错过于频繁");
+        resultType.put("-17011", "软件报错功能被关闭");
+        errorType.put("-17011", "软件报错功能被关闭");
+        resultType.put("-19001", "UserAgent内容错误");
+        errorType.put("-19001", "UserAgent内容错误");
+        resultType.put("-19002", "API版本号错误");
+        errorType.put("-19002", "API版本号错误");
+        resultType.put("-19003", "TTL错误");
+        errorType.put("-19003", "TTL错误");
+        resultType.put("-19004", "API文件MD5校验失败");
+        errorType.put("-19004", "API文件MD5校验失败");
+        resultType.put("-19005", "API文件版本不存在");
+        errorType.put("-19005", "API文件版本不存在");
+        resultType.put("-19006", "API文件版本被篡改");
+        errorType.put("-19006", "API文件版本被篡改");
+        resultType.put("-19007", "API文件版本已过期");
+        errorType.put("-19007", "API文件版本已过期");
+        resultType.put("-19008", "此API版本已被禁用");
+        errorType.put("-19008", "此API版本已被禁用");
+        resultType.put("-19011", "软件SID参数无效");
+        errorType.put("-19011", "软件SID参数无效");
+        resultType.put("-19012", "软件ID不存在");
+        errorType.put("-19012", "软件ID不存在");
+        resultType.put("-19013", "软件未启用");
+        errorType.put("-19013", "软件未启用");
+        resultType.put("-19014", "软件被禁用");
+        errorType.put("-19014", "软件被禁用");
+        resultType.put("-19015", "软件状态不正常");
+        errorType.put("-19015", "软件状态不正常");
+        resultType.put("-19020", "服务器无法使用TEAKEY解密");
+        errorType.put("-19020", "服务器无法使用TEAKEY解密");
+    }
+
+//    public static String isReturnOK(String[] results) {
+//        errorType.get(results[1])
+//    }
 
     public static void main(String[] args) throws Exception {
         //________________初始化接口类需要的参数，或者直接写到UUAPI。java文件里面________________
