@@ -81,4 +81,30 @@ public class AIMA {
         }
         throw new MachineException("向爱玛平台索要验证码超时");
     }
+
+    public String getSohuPhoneCode(String phone) {
+        log.debug("向爱玛平台所要手机验证码:" + AIMA_GET_CODE_URL + phone);
+        for (int i = 0; i < 30; i++) {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            String codeResult = HttpUtils.Get(AIMA_GET_CODE_URL + phone);
+            log.debug("爱玛平台返回验证码信息:{}", codeResult);
+            int length = codeResult.split("\\|").length;
+            if (length == 2) {
+                Pattern p = Pattern.compile("([0-9]{4})");
+                Matcher m = p.matcher(codeResult.split("\\|")[1]);
+                if (m.find()) {
+                    String code = m.group();
+                    log.debug("发现野生的手机验证码一枚:" + code);
+                    return code;
+                }
+            } else {
+                log.debug("验证码不对，继续等待");
+            }
+        }
+        throw new MachineException("向爱玛平台索要验证码超时");
+    }
 }

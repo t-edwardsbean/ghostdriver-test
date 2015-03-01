@@ -1,6 +1,7 @@
 package com.ed;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
@@ -38,7 +39,7 @@ public class SohuTaskProcess extends TaskProcess {
         }
         caps.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, args.toArray(new String[args.size()]));
         //phantomjs启动后的参数
-        caps.setCapability(PhantomJSDriverService.PHANTOMJS_PAGE_SETTINGS_PREFIX + "userAgent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36");
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_PAGE_SETTINGS_PREFIX + "userAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
         caps.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, phantomjsPath);
         caps.setJavascriptEnabled(true);
         caps.setCapability("takesScreenshot", true);
@@ -91,6 +92,8 @@ public class SohuTaskProcess extends TaskProcess {
             phoneElement.sendKeys("18046049822");
             WebElement releaseElement = session.findElementByCssSelector("#email_reg a.mt5");
             releaseElement.click();
+//            WebElement refleshPictureButton = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.vContext > span");
+//            refleshPictureButton.click();
             log.debug("等待第一个验证码");
             Thread.sleep(1000);
             log.debug("截取第一个图片验证码");
@@ -98,15 +101,21 @@ public class SohuTaskProcess extends TaskProcess {
             TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"), firstPicturePath);
             Thread.sleep(1000);
             String result[] = UUAPI.easyDecaptcha(firstPicturePath, 3005);
+            String code = result[1];
             log.debug("第一个图片验证码codeID:" + result[0]);
-            log.debug("第一个图片验证码Result:" + result[1]);
+            log.debug("第一个图片验证码Result:" + code + "结束");
+            if (!StringUtils.isAsciiPrintable(code)) {
+                log.error("不是");
+                return;
+            }
             log.debug("输入第一个图片验证码");
-//            //TODO 获取图片验证码结果
+            //TODO 获取图片验证码结果
             WebElement firstPictureVerify = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > div.vContext > input");
-            firstPictureVerify.sendKeys(result[1]);
+            firstPictureVerify.click();
+            firstPictureVerify.sendKeys(code);
             WebElement firstPictureButton = session.findElementByCssSelector("body > div.modal.verification.popsmsyzm > a.blue_btn");
             int tryNum = 3;
-            while (true) {
+            while (tryNum > 0) {
                 log.debug("验证第一个图片验证码");
                 FileUtils.copyFile(((TakesScreenshot) session).getScreenshotAs(OutputType.FILE), new File("tmp/sohu-first-before.png"));
                 firstPictureButton.click();
@@ -121,7 +130,7 @@ public class SohuTaskProcess extends TaskProcess {
 //                log.debug("更换第一个验证码，重试");
 //                TakeFirstPicture(session, session.findElementByCssSelector("div.modal.verification.popsmsyzm"),firstPicturePath);
 //                Thread.sleep(2000);
-//                //TODO 获取图片验证码结果
+//                TODO 获取图片验证码结果
 //                result = UUAPI.easyDecaptcha(firstPicturePath, 1005);
 //                log.debug("第一个图片验证码codeID:" + result[0]);
 //                log.debug("第一个图片验证码Result:" + result[1]);

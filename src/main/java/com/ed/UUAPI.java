@@ -76,7 +76,7 @@ public class UUAPI {
         int codeID = UUDLL.INSTANCE.uu_easyRecognizeBytesA(SOFTID, SOFTKEY, USERNAME, PASSWORD, by, by.length, codeType, resultBtye);
         String resultResult = null;
         try {
-            resultResult = new String(resultBtye, "GB2312");//如果是乱码，这改成UTF-8试试
+            resultResult = new String(resultBtye, "gb2312");//如果是乱码，这改成UTF-8试试
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
