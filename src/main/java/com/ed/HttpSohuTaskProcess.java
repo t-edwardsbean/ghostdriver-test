@@ -12,6 +12,8 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,51 +52,69 @@ public class HttpSohuTaskProcess extends TaskProcess {
             log.error("邮箱不可用");
             return;
         }
-
-        //下载第一个验证码
-        String codeOne = getPhoneCode("codeOne.png", context);
-
-        //发送手机验证码
-        HttpPost phonePost = new HttpPost("https://passport.sohu.com/regist/send_sms_captcha");
-        nvps.clear();
-        String phoneNum = aima.getPhone();
-        nvps.add(new BasicNameValuePair("mobile", phoneNum));
-        nvps.add(new BasicNameValuePair("captcha", codeOne));
-        phonePost.setEntity(new UrlEncodedFormEntity(nvps));
-        CloseableHttpResponse phoneResponse = HttpUtils.httpclient.execute(phonePost, context);
-        String phonePostResult = EntityUtils.toString(phoneResponse.getEntity());
-        log.debug("请求发送短信：" + phonePostResult);
-        result = JsonPath.read(phonePostResult, "$.status");
-        if ("458".equals(result)) {
-            log.error("验证码错误");
-//            TODO 验证码错误反馈
-            return;
-        } else if ("405".equals(result)) {
-            log.error("该手机号当日短信发送次数超过上限");
-            return;
+        String phoneNum;
+        String phoneCode;
+        while (true) {
+            //下载第一个验证码
+            String codeOne = getPhoneCode("codeOne.png", context);
+            //发送手机验证码
+            HttpPost phonePost = new HttpPost("https://passport.sohu.com/regist/send_sms_captcha");
+            nvps.clear();
+            phoneNum = aima.getPhone();
+            nvps.add(new BasicNameValuePair("mobile", phoneNum));
+            nvps.add(new BasicNameValuePair("captcha", codeOne));
+            phonePost.setEntity(new UrlEncodedFormEntity(nvps));
+            CloseableHttpResponse phoneResponse = HttpUtils.httpclient.execute(phonePost, context);
+            String phonePostResult = EntityUtils.toString(phoneResponse.getEntity());
+            log.debug("请求发送短信：" + phonePostResult);
+            result = JsonPath.read(phonePostResult, "$.status");
+            if ("458".equals(result)) {
+                log.error("验证码错误");
+                //TODO 验证码错误反馈
+                continue;
+            } else if ("405".equals(result)) {
+                log.error("该手机号当日短信发送次数超过上限");
+                continue;
+            }
+            log.debug("发送验证码成功");
+            phoneCode = aima.getSohuPhoneCode(phoneNum);
+            if (phoneCode != null) {
+                break;
+            }
         }
-        log.debug("发送验证码成功");
-        String phoneCode = aima.getSohuPhoneCode(phoneNum);
 
-        //下载第二个验证码
-        String codeSecond = getPhoneCode("codeSecond.png", context);
-
-        //提交注册
-        HttpPost submit = new HttpPost("https://passport.sohu.com/regist/email");
-        nvps.clear();
-        nvps.add(new BasicNameValuePair("email", email));
-        nvps.add(new BasicNameValuePair("password", task.getPassword()));
-        nvps.add(new BasicNameValuePair("new_password", task.getPassword()));
-        nvps.add(new BasicNameValuePair("mobile", phoneNum));
-        nvps.add(new BasicNameValuePair("mtoken", phoneCode));
-        nvps.add(new BasicNameValuePair("captcha", codeSecond));
-        nvps.add(new BasicNameValuePair("appid", "1000"));
-        nvps.add(new BasicNameValuePair("domain", "sohu.com"));
-        nvps.add(new BasicNameValuePair("ru", "http://login.mail.sohu.com/reg/signup_success.jsp"));
-        submit.setEntity(new UrlEncodedFormEntity(nvps));
-        CloseableHttpResponse submitResponse = HttpUtils.httpclient.execute(submit, context);
-        String submitPostResult = EntityUtils.toString(submitResponse.getEntity());
-        log.debug("请求发送短信：" + submitPostResult);
+        while (true) {
+            //第二个图片验证码
+            String codeSecond = getPhoneCode("codeSecond.png", context);
+            //提交注册
+            HttpPost submit = new HttpPost("https://passport.sohu.com/regist/email");
+            nvps.clear();
+            nvps.add(new BasicNameValuePair("email", task.getEmail()));
+            nvps.add(new BasicNameValuePair("password", task.getPassword()));
+            nvps.add(new BasicNameValuePair("new_password", task.getPassword()));
+            nvps.add(new BasicNameValuePair("mobile", phoneNum));
+            nvps.add(new BasicNameValuePair("mtoken", phoneCode));
+            nvps.add(new BasicNameValuePair("captcha", codeSecond));
+            nvps.add(new BasicNameValuePair("appid", "1000"));
+            nvps.add(new BasicNameValuePair("domain", "sohu.com"));
+            nvps.add(new BasicNameValuePair("ru", "http://login.mail.sohu.com/reg/signup_success.jsp"));
+            submit.setEntity(new UrlEncodedFormEntity(nvps));
+            CloseableHttpResponse submitResponse = HttpUtils.httpclient.execute(submit, context);
+            String submitPostResult = EntityUtils.toString(submitResponse.getEntity());
+            if (submitPostResult != null) {
+                Element ele = Jsoup.parse(submitPostResult).select("#email_reg > p:nth-child(7) > span.info_tips").first();
+                if (ele != null && "验证码错误".equals(ele.html())) {
+                    log.debug("图片验证码错误,重试");
+                    //TODO 错误验证码反馈
+                    continue;
+                } else {
+                    log.debug("注册失败，未知错误：" + submitPostResult);
+                    throw new MachineException("注册失败，未知错误");
+                }
+            }
+            log.debug("注册成功");
+            break;
+        }
 
 
     }
@@ -137,7 +157,7 @@ public class HttpSohuTaskProcess extends TaskProcess {
         registryMachine.thread(1);
         registryMachine.setTaskProcess(new HttpSohuTaskProcess(""));
         registryMachine.addTask(
-                new Task("aazx123a1a1", "2692194")
+                new Task("wsscy2014b", "2692194")
         );
         boolean status = UUAPI.checkAPI();    //校验API，必须调用一次，校验失败，打码不成功
 
